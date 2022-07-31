@@ -1,0 +1,11 @@
+/*
+
+!/config/
+!/controller/
+!/lib/
+!/middleware/
+!/migrations/
+!/model/
+!/routes/
+!/services/
+!/.gitignore

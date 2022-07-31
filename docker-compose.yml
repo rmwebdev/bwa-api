@@ -1,0 +1,60 @@
+version: '3.8'
+
+networks:
+  go: {}
+
+volumes:
+  goroot: {}
+  gocache: {}
+  pgdata: {}
+
+services:
+  go:
+    image: golang:1.15-buster
+    volumes:
+      - goroot:/go
+      - gocache:/.cache/go-build
+      - .:/project
+    ports:
+      - 9000:9000
+    working_dir: /project
+    environment:
+      - TZ=Asia/Jakarta
+      - PORT=9000
+    command:
+      - tail
+      - -f
+      - /etc/hosts
+    networks:
+      - go
+  postgres:
+    image: postgres:9.5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - TZ=Asia/Jakarta
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - 55632:5432
+    networks:
+      go:
+        aliases:
+          - postgres
+  redis:
+    image: redis:alpine
+    environment:
+      - TZ=Asia/Jakarta
+    networks:
+      go:
+        aliases:
+          - redis
+  swagger:
+    image: swaggerapi/swagger-ui:latest
+    environment:
+      - URL=/docs/swagger-local.yaml
+    volumes:
+      - ./docs:/usr/share/nginx/html/docs
+    ports:
+      - 8080:8080

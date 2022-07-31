@@ -1,0 +1,508 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bayu-buana
+---
+apiVersion: v1
+kind: Secret
+data:
+  .dockerconfigjson: "{SECRET}"
+metadata:
+  name: regcred
+  namespace: bayu-buana
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: master-service-config-dev
+  namespace: bayu-buana
+stringData:
+  TZ: "Asia/Jakarta"
+  ENVIRONMENT: "staging"
+  DB_TYPE: "postgres"
+  DB_HOST: "{DB_HOST}"
+  DB_USER: "postgres"
+  DB_NAME: "postgres_dev"
+  DB_PASS: "postgres"
+  DB_PORT: "5432"
+  DB_TABLE_PREFIX: ""
+  BASE_URL: "https://bbdev.monstercode.net"
+  STORAGE_PERMANENT_DELETE: "true"
+  STORAGE_DIRECTORY: "/data/uploads"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  PREFORK: "true"
+  DSN: "postgres://postgres:postgres@{DB_HOST}:5432/postgres_oauth2?sslmode=disable&max_conns=20&max_idle_conns=4"
+  LOG_LEVEL: "panic"
+  URLS_LOGOUT: "https://bbdev.monstercode.net/logout"
+  URLS_LOGIN: "https://bbdev.monstercode.net/login"
+  URLS_CALLBACKS: "https://bbdev.monstercode.net/api/v1/user/callback"
+  URLS_CONSENT: "https://bbdev.monstercode.net/api/v1/user/consent"
+  URLS_POST_LOGOUT: "https://bbdev.monstercode.net/"
+  URLS_SELF_PUBLIC: "https://bbdev.monstercode.net"
+  URLS_ERROR: "https://bbdev.monstercode.net/oauth2/auth-error"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: csi-pvc
+  namespace: bayu-buana
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: do-block-storage
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: "11m"
+    nginx.ingress.kubernetes.io/large-client-header-buffers: "128k"
+    nginx.ingress.kubernetes.io/http2_max_header_size: "32k"
+    nginx.ingress.kubernetes.io/http2-max-field-size: "8k"
+  name: bbingress
+  namespace: bayu-buana
+spec:
+  rules:
+    - host: bbstg.monstercode.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: /api/v1/master
+            backend:
+              service:
+                name: master-service-cluster
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/integration
+            backend:
+              service:
+                name: integration-service-cluster
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/loyalty
+            backend:
+              service:
+                name: loyalty-service-cluster
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/reservation
+            backend:
+              service:
+                name: reservation-service-cluster
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/payment
+            backend:
+              service:
+                name: payment-service-cluster
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/user
+            backend:
+              service:
+                name: user-service-cluster
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /oauth2
+            backend:
+              service:
+                name: user-service-cluster
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/multimedia
+            backend:
+              service: 
+                name: multimedia-service-cluster
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /files
+            backend:
+              service: 
+                name: multimedia-service-cluster
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /
+            backend:
+              service: 
+                name: frontend-service-cluster
+                port:
+                  number: 80
+    - host: bbdev.monstercode.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: /api/v1/master
+            backend:
+              service:
+                name: master-service-cluster-dev
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/integration
+            backend:
+              service:
+                name: integration-service-cluster-dev
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/loyalty
+            backend:
+              service:
+                name: loyalty-service-cluster-dev
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/reservation
+            backend:
+              service:
+                name: reservation-service-cluster-dev
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/payment
+            backend:
+              service:
+                name: payment-service-cluster-dev
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/user
+            backend:
+              service:
+                name: user-service-cluster-dev
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /oauth2
+            backend:
+              service:
+                name: user-service-cluster-dev
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/multimedia
+            backend:
+              service: 
+                name: multimedia-service-cluster-dev
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /files
+            backend:
+              service: 
+                name: multimedia-service-cluster-dev
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /
+            backend:
+              service: 
+                name: frontend-service-cluster-dev
+                port:
+                  number: 80
+    - host: bbprod.monstercode.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: /api/v1/master
+            backend:
+              service:
+                name: master-service-cluster-prod
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/integration
+            backend:
+              service:
+                name: integration-service-cluster-prod
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/loyalty
+            backend:
+              service:
+                name: loyalty-service-cluster-prod
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/reservation
+            backend:
+              service:
+                name: reservation-service-cluster-prod
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/payment
+            backend:
+              service:
+                name: payment-service-cluster-prod
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/user
+            backend:
+              service:
+                name: user-service-cluster-prod
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /oauth2
+            backend:
+              service:
+                name: user-service-cluster-prod
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /api/v1/multimedia
+            backend:
+              service: 
+                name: multimedia-service-cluster-prod
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /files
+            backend:
+              service: 
+                name: multimedia-service-cluster-prod
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: /
+            backend:
+              service: 
+                name: frontend-service-cluster-prod
+                port:
+                  number: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: master-service-cluster-dev
+  namespace: bayu-buana
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 9000
+  selector:
+    app: master-service-dev
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: multimedia-service-cluster-dev
+  namespace: bayu-buana
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 9001
+  selector:
+    app: multimedia-service-dev
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service-cluster-dev
+  namespace: bayu-buana
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: frontend-service-dev
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: bayu-buana
+spec:
+  ports:
+    - port: 6379
+      name: redis
+  selector:
+    app: cache
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache
+  labels:
+    app: cache
+  namespace: bayu-buana
+spec:
+  selector:
+    matchLabels:
+      app: cache
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 50%
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cache
+    spec:
+      containers:
+        - image: redis
+          name: redis
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: Asia/Jakarta
+            - name: VERSION
+              value: "{API_VERSION}"
+          ports:
+            - containerPort: 6379
+      nodeSelector:
+        has-storage: "no"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: master-service-dev
+  namespace: bayu-buana
+  labels:
+    app: master-service-dev
+spec:
+  selector:
+    matchLabels:
+      app: master-service-dev
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: master-service-dev
+    spec:
+      hostPID: true
+      containers:
+        - image: registry.tog.co.id/bb/master-service:latest
+          name: master-service-dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9000
+          env:
+            - name: TZ
+              value: Asia/Jakarta
+            - name: VERSION
+              value: "{API_VERSION}"
+          envFrom:
+            - secretRef:
+                name: master-service-config-dev
+      nodeSelector:
+        has-storage: "no"
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multimedia-service-dev
+  namespace: bayu-buana
+  labels:
+    app: multimedia-service-dev
+spec:
+  selector:
+    matchLabels:
+      app: multimedia-service-dev
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: multimedia-service-dev
+    spec:
+      hostPID: true
+      containers:
+        - image: registry.tog.co.id/bb/multimedia-service:latest
+          name: multimedia-service-dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9001
+          env:
+            - name: TZ
+              value: Asia/Jakarta
+            - name: VERSION
+              value: "{API_VERSION}"
+          envFrom:
+            - secretRef:
+                name: master-service-config-dev
+          volumeMounts:
+          - mountPath: "/data"
+            name: bb-storage
+      nodeSelector:
+        has-storage: "yes"
+      volumes:
+        - name: bb-storage
+          persistentVolumeClaim:
+            claimName: csi-pvc
+      imagePullSecrets:
+        - name: regcred
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: frontend-service-dev
+#   namespace: bayu-buana
+#   labels:
+#     app: frontend-service-dev
+# spec:
+#   selector:
+#     matchLabels:
+#       app: frontend-service-dev
+#   strategy:
+#     type: RollingUpdate
+#     rollingUpdate:
+#       maxSurge: 1
+#       maxUnavailable: 0
+#   replicas: 2
+#   template:
+#     metadata:
+#       labels:
+#         app: frontend-service-dev
+#     spec:
+#       hostPID: true
+#       containers:
+#         - image: registry.tog.co.id/bb/bayu-buana-cms:cms-prod
+#           name: frontend-service-dev
+#           imagePullPolicy: Always
+#           ports:
+#             - containerPort: 80
+#           env:
+#             - name: TZ
+#               value: Asia/Jakarta
+#             - name: VERSION
+#               value: "{API_VERSION}"
+#           envFrom:
+#             - secretRef:
+#                 name: master-service-config-dev
+#       imagePullSecrets:
+#         - name: regcred
